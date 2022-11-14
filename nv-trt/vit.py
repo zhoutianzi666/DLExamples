@@ -13,7 +13,7 @@ model_path = "/zhoukangkang/old_tipc-opt/ait_examples/vit/model_folded.onnx"
 success = parser.parse_from_file(model_path)
 config = builder.create_builder_config()
 config.set_flag(trt.BuilderFlag.FP16)
-config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30) # 1 MiB
+config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30) # 1 GB
 profile = builder.create_optimization_profile()
 
 input_shape = [2,3,224,224]

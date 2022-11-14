@@ -21,7 +21,7 @@ model_file = "/zhoukangkang/old_tipc-opt/ait_examples/resnet/model.onnx"
 sess = ort.InferenceSession(model_file, sess_options=sess_opt, providers=trt_providers)
 input_data = {}
 name = "input.1"
-batch = 1
+batch = 16
 real_input = np.zeros([batch, 3, 224, 224], dtype=np.float32)
 input_data[name] = real_input
 
