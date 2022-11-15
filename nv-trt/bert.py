@@ -60,8 +60,8 @@ print(h_output.nbytes)
 #创建一个流，在其中复制输入/输出并运行推断
 stream = cuda.Stream()
 cuda.memcpy_htod_async(d_input0, h_input0, stream)
-cuda.memcpy_htod_async(d_input0, h_input0, stream)
-cuda.memcpy_htod_async(d_input0, h_input0, stream)
+cuda.memcpy_htod_async(d_input1, h_input1, stream)
+cuda.memcpy_htod_async(d_input2, h_input2, stream)
 stream.synchronize()
 
 import datetime
