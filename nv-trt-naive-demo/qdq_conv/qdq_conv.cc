@@ -107,10 +107,6 @@ int main()
   auto kernel_dequant_tensor =  kernel_dequant_layer->getOutput(0);
 
 
-
-
-
-
 nvinfer1::IOptimizationProfile* profile1 = trt_builder->createOptimizationProfile();
 profile1->setDimensions("foo0", nvinfer1::OptProfileSelector::kMIN, nvinfer1::Dims4(1,3, 224, 224));
 profile1->setDimensions("foo0", nvinfer1::OptProfileSelector::kOPT, nvinfer1::Dims4(3,3, 224, 224));
@@ -139,8 +135,7 @@ trt_config->addOptimizationProfile(profile1);
     dequant_layer->setAxis(1);
     x = dequant_layer->getOutput(0);
 
-
-   //
+   // 必须将 kernel_weight设置为空！
     kernel_weight.values = nullptr;
     kernel_weight.count = 0;
 
