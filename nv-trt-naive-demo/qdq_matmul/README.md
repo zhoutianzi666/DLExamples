@@ -8,7 +8,7 @@ Thread: 117566
 
 
 
-- 还真他妈的跑了int8 的 kernel了！
+- 还真跑了int8 的 kernel！
 - 权重输入也必须是qdq哦！
 
 ```cpp
@@ -32,7 +32,7 @@ Correlation ID: 39902
 Stream: Stream 34
 ```
 
-- 我他妈要是在下面加上个qdq+激活，结果变成了下面这个kernel了！牛蛙！
+- 我要是在下面加上个qdq+激活，结果变成了下面这个kernel了！
 
 ```cpp
 sm80_xmma_fprop_implicit_gemm_interleaved_i8i8_i8i32_f32_nchw_vect_c_32kcrs_vect_c_32_nchw_vect_c_32_tilesize32x32x64_stage6_warpsize2x1x1_g1_tensor16x8x32_t1r1s1_linkable_execute_kernel_trt
