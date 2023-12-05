@@ -1,6 +1,7 @@
 import argparse
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["FLAGS_new_executor_serial_run"] = "true"
 #os.environ["FLAGS_use_cuda_managed_memory"] = "true"
 
 
@@ -9,13 +10,6 @@ from paddle import inference
 from paddlenlp.transformers import MiniGPT4Processor
 from PIL import Image
 import requests
-
-import sys
-
-#sys.path.append("/zhoukangkang/2023-06-06minigpt/PaddleNLP/llm")
-#from utils import load_real_time_tokens
-
-import numpy as np
 
 class Predictor(object):
     def __init__(self, args):
@@ -45,36 +39,20 @@ class Predictor(object):
         if not os.path.exists(params_file):
             raise ValueError("not find params file path {}".format(params_file))
         config = paddle.inference.Config(model_file, params_file)
-        
-        shape_range_file = model_file + "shape.txt"
-        # 第一次运行的时候需要收集shape信息，请打开下面的注释
-        # config.collect_shape_range_info(shape_range_file)
         config.enable_new_executor(True)
 
         config.switch_ir_optim(True)
-        # 第一个模型跑TRT
-        if(model_file.find("llama") == -1):
-            self.args.use_tensorrt = False
-        else:
-            self.args.use_tensorrt = False
+        self.args.use_tensorrt = False
 
         if self.args.device == "gpu":
             # set GPU configs accordingly
             # such as initialize the gpu memory, enable tensorrt
             config.enable_use_gpu(100, 0)
-            precision_mode = inference.PrecisionType.Half
-            # 第一个模型是要跑TRT的
-            if self.args.use_tensorrt:
-                config.enable_tuned_tensorrt_dynamic_shape(shape_range_file, True)
-                config.enable_tensorrt_engine(
-                    max_batch_size=-1, min_subgraph_size=30, precision_mode=precision_mode,
-                    use_static = True)
 
         config.switch_use_feed_fetch_ops(False)
         predictor = paddle.inference.create_predictor(config)
         input_handles = [predictor.get_input_handle(name) for name in predictor.get_input_names()]
         output_handle = [predictor.get_output_handle(name) for name in predictor.get_output_names()]
-        # output_handle = predictor.get_output_handle(predictor.get_output_names()[0])
 
         return predictor, input_handles, output_handle
 
@@ -133,23 +111,10 @@ class Predictor(object):
                                        ]
         for i in range(40):
             tmp = paddle.rand(shape=[2, batch, 40, max_len, 128], dtype=dtype)
-            print(tmp.shape)
             inputs.append(tmp)
 
         outputs = self.second_predictor.run(inputs)
-
-        import datetime
-        import time
-        starttime = datetime.datetime.now()
-        
         generate_ids = outputs[0]
-        #tokens: np.ndarray = load_real_time_tokens()
-        #generate_ids = tokens.tolist()
-        
-        endtime = datetime.datetime.now()
-        duringtime = endtime - starttime
-        ms = duringtime.seconds * 1000 + duringtime.microseconds / 1000.0
-        print ("读取磁盘时间，", ms)# 单位是毫秒
         return generate_ids, None
 
     def pre_processing(self, images, text, prompt=None):
@@ -162,14 +127,7 @@ class Predictor(object):
 
     def predict(self, images, text, prompt=None):
         processed_contents = self.pre_processing(images, text, prompt=prompt)
-        batch = 1
-        processed_contents["pixel_values"] = paddle.tile(processed_contents["pixel_values"], repeat_times=[batch,1,1,1])
         image_features, image_attention_mask = self.encode_images(processed_contents["pixel_values"])
-        print(image_attention_mask.shape)
-        processed_contents["first_input_ids"] = paddle.tile(processed_contents["first_input_ids"], repeat_times=[batch,1])
-        processed_contents["second_input_ids"] = paddle.tile(processed_contents["second_input_ids"], repeat_times=[batch,1])
-        processed_contents["first_attention_mask"] = paddle.tile(processed_contents["first_attention_mask"], repeat_times=[batch,1])
-        processed_contents["second_attention_mask"] = paddle.tile(processed_contents["second_attention_mask"], repeat_times=[batch,1])
         generate_ids, _ = self.generate_with_image_features(
             image_features,
             processed_contents["first_input_ids"],
